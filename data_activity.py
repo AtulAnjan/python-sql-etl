@@ -58,3 +58,45 @@ conn = engine.connect()
 # Loading the data to sql server table
 # used append because table is already created else use replace
 df.to_sql('df_orders', con=conn, if_exists='append', index=False)
+
+# Loading the data to mysql if spark dataframe (Line 63 to 82)
+mysql_connector_path = "spark-jars/mysql-connector-j-9.1.0.jar"
+
+spark = SparkSession.builder.appName("mysql-integration").config("spark.jars", mysql_connector_path).getOrCreate()
+
+# MySQL connection details if using spark dataframe
+jdbc_url = "jdbc:mysql://localhost:3306/my_db"
+table_name = "df_orders"
+user = "root@localhost"
+password = "Atul#007"
+
+# Write DataFrame to MySQL
+spark_df.write \
+    .format("jdbc") \
+    .option("url", jdbc_url) \
+    .option("dbtable", table_name) \
+    .option("user", user) \
+    .option("password", password) \
+    .option("driver", "com.mysql.cj.jdbc.Driver") \
+    .mode("append") \
+    .save()
+
+# If connecting the pandas dataframe
+# If using the pandas dataframe
+from sqlalchemy import create_engine
+
+# MySQL Database credentials
+user = "root"
+password = "Atul#007"  # Replace with your password
+host = "localhost"
+port = 3306
+database = "my_db"  # Replace with your database name
+
+# Create SQLAlchemy engine
+engine = create_engine(f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}")
+
+# Write the DataFrame to a table in MySQL
+table_name = "df_orders"  # Replace with your desired table name
+df.to_sql(name=table_name, con=engine, if_exists='replace', index=False)
+
+print(f"DataFrame has been successfully written to the table '{table_name}' in the database '{database}'.")
